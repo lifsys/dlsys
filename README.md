@@ -1,4 +1,4 @@
-# Dlsys v2.0.0
+# Dlsys v2.1.0
 
 Dlsys is a powerful and versatile Python package for downloading and processing various types of content from the internet, including YouTube videos, websites, images, and audio files.
 
@@ -10,6 +10,7 @@ Dlsys is a powerful and versatile Python package for downloading and processing 
 - Download and save webpages
 - Support for multiprocessing to speed up downloads
 - Improved error handling and logging
+- Customizable output formats for audio and video
 
 ## Installation
 
@@ -21,7 +22,7 @@ pip install dlsys
 
 ## Usage
 
-Here are some examples of how to use Dlsys v2.0.0:
+Here are some examples of how to use Dlsys v2.1.0:
 
 ```python
 from dlsys import Dlsys
@@ -29,8 +30,8 @@ from dlsys import Dlsys
 # Download audio from a YouTube video and split it into 60-minute segments
 Dlsys().set_url("https://youtu.be/Y3whytmX51w").split(60).audio()
 
-# Download video from a YouTube URL
-Dlsys().set_url("https://youtu.be/Y3whytmX51w").video()
+# Download video from a YouTube URL in MP4 format
+Dlsys().set_url("https://youtu.be/Y3whytmX51w").set_format("mp4").video()
 
 # Download multiple audio files using multiprocessing
 urls = ["https://youtu.be/video1", "https://youtu.be/video2", "https://youtu.be/video3"]
@@ -45,13 +46,13 @@ webpage_urls = ["https://example.com", "https://example.org"]
 Dlsys().set_url(webpage_urls).output_dir("webpages").download_webpages()
 ```
 
-## New in v2.0.0
+## New in v2.1.0
 
-- Improved error handling and logging
-- Added support for video downloads
-- Enhanced multiprocessing capabilities
-- Updated to support Python 3.7+
-- Improved documentation and type hints
+- Added `set_format()` method to specify output format for audio and video
+- Improved error handling with more informative error messages
+- Enhanced logging capabilities for better debugging
+- Performance optimizations for faster downloads
+- Updated dependencies to their latest versions
 
 ## License
 
@@ -60,3 +61,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+If you encounter any issues or have questions, please open an issue on the [GitHub repository](https://github.com/yourusername/dlsys/issues).

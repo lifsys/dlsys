@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="dlsys",
-    version="2.0.0",
+    version="2.1.0",
     author="Your Name",
     author_email="your.email@example.com",
     description="A versatile downloader for various types of internet content",
@@ -14,7 +14,7 @@ setup(
     url="https://github.com/yourusername/dlsys",
     packages=find_packages(),
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
@@ -31,4 +31,10 @@ setup(
         "requests",
         "pydub",
     ],
+    keywords="downloader youtube audio video image webpage",
+    project_urls={
+        "Bug Tracker": "https://github.com/yourusername/dlsys/issues",
+        "Documentation": "https://github.com/yourusername/dlsys/blob/main/README.md",
+        "Source Code": "https://github.com/yourusername/dlsys",
+    },
 )
