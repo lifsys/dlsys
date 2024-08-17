@@ -1,11 +1,12 @@
 import yt_dlp
-import multiprocessing
+import concurrent.futures
 import os
 import requests
 from pathlib import Path
 from pydub import AudioSegment
 import math
 import logging
+from functools import partial
 
 class Dlsys:
     """
@@ -52,6 +53,7 @@ class Dlsys:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        self.session = requests.Session()
 
     def set_url(self, urls):
         """Set the URL(s) for download."""
@@ -141,13 +143,13 @@ class Dlsys:
     def download_image(self, url, output_path):
         """Download a single image and save it to the specified output path."""
         try:
-            response = requests.get(url)
+            response = self.session.get(url)
             response.raise_for_status()
             with open(output_path, 'wb') as file:
                 file.write(response.content)
-            print(f"Image downloaded and saved to: {output_path}")
+            self.logger.info(f"Image downloaded and saved to: {output_path}")
         except requests.exceptions.RequestException as e:
-            print(f"Error downloading image from {url}: {e}")
+            self.logger.error(f"Error downloading image from {url}: {e}")
 
     def download_images(self, image_urls):
         """
@@ -179,41 +181,34 @@ class Dlsys:
     def download_webpage(self, url, output_path):
         """Download a single webpage and save it to the specified output path."""
         try:
-            response = requests.get(url)
+            response = self.session.get(url)
             response.raise_for_status()
             
             with open(output_path, 'w', encoding='utf-8') as file:
                 file.write(response.text)
             
-            print(f"Webpage downloaded and saved to: {output_path}")
+            self.logger.info(f"Webpage downloaded and saved to: {output_path}")
         except requests.exceptions.RequestException as e:
-            print(f"Error downloading webpage {url}: {e}")
+            self.logger.error(f"Error downloading webpage {url}: {e}")
 
     def download_webpages(self, webpage_urls):
         """
-        Download a list of webpages and save them to the output directory using multiprocessing.
+        Download a list of webpages and save them to the output directory using concurrent.futures.
         
         :param webpage_urls: A list of webpage URLs to download.
         """
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
 
-        if self.use_multiprocessing:
-            with multiprocessing.Pool() as pool:
-                tasks = []
-                for url in webpage_urls:
-                    filename = f"{url.split('://')[-1].replace('/', '_')}.html"
-                    output_path = os.path.join(self.output_dir, filename)
-                    tasks.append(pool.apply_async(self.download_webpage, args=(url, output_path)))
-                
-                for task in tasks:
-                    task.get()  # Wait for all tasks to complete
-        else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            futures = []
             for url in webpage_urls:
                 filename = f"{url.split('://')[-1].replace('/', '_')}.html"
                 output_path = os.path.join(self.output_dir, filename)
-                self.download_webpage(url, output_path)
+                futures.append(executor.submit(self.download_webpage, url, output_path))
+            
+            concurrent.futures.wait(futures)
 
-        print("All webpages downloaded!")
+        self.logger.info("All webpages downloaded!")
         return self
 
     def video(self):
@@ -268,23 +263,22 @@ class Dlsys:
 
     def download_images(self, image_urls):
         """
-        Download a list of images and save them to the output directory using multiprocessing.
+        Download a list of images and save them to the output directory using concurrent.futures.
         
         :param image_urls: A list of image URLs to download.
         """
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
 
-        with multiprocessing.Pool() as pool:
-            tasks = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            futures = []
             for url in image_urls:
                 filename = os.path.basename(url)
                 output_path = os.path.join(self.output_dir, filename)
-                tasks.append(pool.apply_async(self.download_image, args=(url, output_path)))
+                futures.append(executor.submit(self.download_image, url, output_path))
             
-            for task in tasks:
-                task.get()  # Wait for all tasks to complete
+            concurrent.futures.wait(futures)
 
-        print("All images downloaded!")
+        self.logger.info("All images downloaded!")
         return self
 
     def split_audio(self, input_file, minutes):
