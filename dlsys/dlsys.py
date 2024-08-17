@@ -104,7 +104,7 @@ class Dlsys:
 
     def download_audios(self, audio_urls):
         """
-        Download a list of audio files and save them to the output directory using multiprocessing.
+        Download a list of audio files and save them to the output directory using concurrent.futures.
         
         :param audio_urls: A list of audio URLs to download.
         :return: A list of output file paths.
@@ -113,13 +113,13 @@ class Dlsys:
 
         output_files = []
         if self.use_multiprocessing:
-            with multiprocessing.Pool() as pool:
-                output_files = pool.map(self._download_audio, audio_urls)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                output_files = list(executor.map(self._download_audio, audio_urls))
         else:
             for url in audio_urls:
                 output_files.append(self._download_audio(url))
 
-        print("All audio files downloaded!")
+        self.logger.info("All audio files downloaded!")
         return output_files
 
     def _download_audio(self, url):
@@ -225,8 +225,8 @@ class Dlsys:
             self._download_video(self.urls[0], ydl_opts)
         else:
             if self.use_multiprocessing:
-                with multiprocessing.Pool() as pool:
-                    pool.starmap(self._download_video, [(url, ydl_opts) for url in self.urls])
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    executor.map(lambda url: self._download_video(url, ydl_opts), self.urls)
             else:
                 for url in self.urls:
                     self._download_video(url, ydl_opts)
