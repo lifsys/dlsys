@@ -153,29 +153,28 @@ class Dlsys:
 
     def download_images(self, image_urls):
         """
-        Download a list of images and save them to the output directory using multiprocessing.
+        Download a list of images and save them to the output directory using concurrent.futures.
         
         :param image_urls: A list of image URLs to download.
         """
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
 
         if self.use_multiprocessing:
-            with multiprocessing.Pool() as pool:
-                tasks = []
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = []
                 for url in image_urls:
                     filename = os.path.basename(url)
                     output_path = os.path.join(self.output_dir, filename)
-                    tasks.append(pool.apply_async(self.download_image, args=(url, output_path)))
+                    futures.append(executor.submit(self.download_image, url, output_path))
                 
-                for task in tasks:
-                    task.get()  # Wait for all tasks to complete
+                concurrent.futures.wait(futures)
         else:
             for url in image_urls:
                 filename = os.path.basename(url)
                 output_path = os.path.join(self.output_dir, filename)
                 self.download_image(url, output_path)
 
-        print("All images downloaded!")
+        self.logger.info("All images downloaded!")
         return self
 
     def download_webpage(self, url, output_path):
