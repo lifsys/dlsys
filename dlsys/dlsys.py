@@ -5,6 +5,7 @@ import requests
 from pathlib import Path
 from pydub import AudioSegment
 import math
+import logging
 
 class Dlsys:
     """
@@ -45,6 +46,12 @@ class Dlsys:
         self.output_dir = '.'
         self.use_multiprocessing = False
         self.split_minutes = None
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
 
     def set_url(self, urls):
         """Set the URL(s) for download."""
@@ -209,20 +216,36 @@ class Dlsys:
         print("All webpages downloaded!")
         return self
 
-    def download_video(self):
-        """Download the video from the set URL and save it to the output path."""
-        if not self.url:
-            raise ValueError("URL not set. Use set_url() method first.")
-
+    def video(self):
+        """Download video from the set URL(s)."""
+        if not self.urls:
+            raise ValueError("URL(s) not set. Use set_url() method first.")
+        
         ydl_opts = {
-            'outtmpl': self.output_path,
+            'format': 'bestvideo+bestaudio/best',
+            'outtmpl': os.path.join(self.output_dir, self.output_path),
         }
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([self.url])
+        if len(self.urls) == 1:
+            self._download_video(self.urls[0], ydl_opts)
+        else:
+            if self.use_multiprocessing:
+                with multiprocessing.Pool() as pool:
+                    pool.starmap(self._download_video, [(url, ydl_opts) for url in self.urls])
+            else:
+                for url in self.urls:
+                    self._download_video(url, ydl_opts)
         
-        print(f"Video downloaded and saved to: {self.output_path}")
         return self
+
+    def _download_video(self, url, ydl_opts):
+        """Helper method to download a single video."""
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+            self.logger.info(f"Video downloaded for: {url}")
+        except Exception as e:
+            self.logger.error(f"Error downloading video from {url}: {str(e)}")
 
     @staticmethod
     def download_image(url, output_path):
